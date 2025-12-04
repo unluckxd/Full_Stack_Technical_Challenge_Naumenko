@@ -1,0 +1,40 @@
+version: 0.2
+
+env:
+  variables:
+    BACKEND_DOCKERFILE: backend/Dockerfile
+    FRONTEND_DOCKERFILE: frontend/Dockerfile
+phases:
+  install:
+    commands:
+      - npm install --prefix backend
+      - npm install --prefix frontend
+  pre_build:
+    commands:
+      - echo Logging into Amazon ECR...
+      - aws --version
+      - $(aws ecr get-login --no-include-email --region $AWS_REGION)
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - BACKEND_IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_BACKEND:$IMAGE_TAG
+      - FRONTEND_IMAGE=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:$IMAGE_TAG
+      - BACKEND_LATEST=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_BACKEND:latest
+      - FRONTEND_LATEST=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_FRONTEND:latest
+  build:
+    commands:
+      - echo Building backend image...
+      - docker build -f $BACKEND_DOCKERFILE -t $BACKEND_IMAGE ./backend
+      - docker tag $BACKEND_IMAGE $BACKEND_LATEST
+      - echo Building frontend image...
+      - docker build -f $FRONTEND_DOCKERFILE -t $FRONTEND_IMAGE ./frontend
+      - docker tag $FRONTEND_IMAGE $FRONTEND_LATEST
+  post_build:
+    commands:
+      - echo Pushing images...
+      - docker push $BACKEND_IMAGE
+      - docker push $BACKEND_LATEST
+      - docker push $FRONTEND_IMAGE
+      - docker push $FRONTEND_LATEST
+      - printf '{"backend":"%s","frontend":"%s"}' "$BACKEND_IMAGE" "$FRONTEND_IMAGE" > image-manifests.json
+artifacts:
+  files:
+    - image-manifests.json
