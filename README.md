@@ -41,9 +41,10 @@ An end-to-end AI generated blog built for the Assimetria full-stack/DevOps chall
     ```
 
 ## AWS deployment flow
-1. Push to GitHub → CodeBuild runs `infra/buildspec.yml`:
+1. Push to GitHub → CodeBuild runs `infra/buildspec.yml` (when AWS lifts the default 0-build quota in the selected region):
    - Installs dependencies, builds Docker images.
    - Tags with commit SHA + `latest` and pushes to ECR repos (`$ECR_REPO_BACKEND`, `$ECR_REPO_FRONTEND`).
+   - _Current status: CodeBuild is configured but blocked by the regional “Cannot have more than 0 builds in queue” limit. Limit-increase request submitted to AWS Support._
 2. SSH/SSM into EC2 (Amazon Linux 2023) prepared via `infra/scripts/init-ec2.sh`.
 3. On EC2, run `infra/scripts/deploy.sh <backend-image> <frontend-image>`:
    - Requires `backend.env` with database + OpenAI secrets.
@@ -69,3 +70,10 @@ infra/     # docker-compose, buildspec, EC2 scripts
 - Swap local Postgres for RDS in production and update `DATABASE_URL` in `backend.env`.
 - Add authentication to the frontend for manual article curation.
 - Integrate health/metrics endpoints with CloudWatch alarms and dashboards.
+- Monitor AWS CodeBuild quota requests; once concurrency >0, trigger the first pipeline run and update this README with the exact ECR tags used in production.
+
+## Submission checklist
+- **Deployed app**: `http://51.20.126.123` (EC2 public IP running the Docker Compose stack – frontend + backend + cron jobs).
+- **Repository**: `https://github.com/unluckxd/Full_Stack_Technical_Challenge_Naumenko`.
+- **Video demo**: _link placeholder_ – record a 30–120 sec walkthrough (UI + API + AWS console) and paste the URL here once ready.
+- **CodeBuild status**: project `assimetria-autoblog` configured with GitHub source and ECR targets; build currently blocked by AWS limit `L-2DC20C30` (“0 concurrent builds”). Limit-increase request submitted on 2025‑12‑04.
