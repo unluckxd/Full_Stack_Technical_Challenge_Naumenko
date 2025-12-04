@@ -44,7 +44,7 @@ An end-to-end AI generated blog built for the Assimetria full-stack/DevOps chall
 1. Push to GitHub → CodeBuild runs `infra/buildspec.yml` (when AWS lifts the default 0-build quota in the selected region):
    - Installs dependencies, builds Docker images.
    - Tags with commit SHA + `latest` and pushes to ECR repos (`$ECR_REPO_BACKEND`, `$ECR_REPO_FRONTEND`).
-   - _Current status: CodeBuild is configured but blocked by the regional “Cannot have more than 0 builds in queue” limit. Limit-increase request submitted to AWS Support._
+   - _Current status: CodeBuild is configured but every run immediately fails to start with `Build failed to start. The following error occurred: Cannot have more than 0 builds in queue for the account.` Limit-increase request submitted to AWS Support._
 2. SSH/SSM into EC2 (Amazon Linux 2023) prepared via `infra/scripts/init-ec2.sh`.
 3. On EC2, run `infra/scripts/deploy.sh <backend-image> <frontend-image>`:
    - Requires `backend.env` with database + OpenAI secrets.
@@ -76,4 +76,4 @@ infra/     # docker-compose, buildspec, EC2 scripts
 - **Deployed app**: `http://51.20.126.123` (EC2 public IP running the Docker Compose stack – frontend + backend + cron jobs).
 - **Repository**: `https://github.com/unluckxd/Full_Stack_Technical_Challenge_Naumenko`.
 - **Video demo**: _link placeholder_ – record a 30–120 sec walkthrough (UI + API + AWS console) and paste the URL here once ready.
-- **CodeBuild status**: project `assimetria-autoblog` configured with GitHub source and ECR targets; build currently blocked by AWS limit `L-2DC20C30` (“0 concurrent builds”). Limit-increase request submitted on 2025‑12‑04.
+- **CodeBuild status**: project `assimetria-autoblog` configured with GitHub source and ECR targets; every attempt ends with `Build failed to start. The following error occurred: Cannot have more than 0 builds in queue for the account` (AWS limit `L-2DC20C30`, “0 concurrent builds”). Limit-increase request submitted on 2025‑12‑04.
